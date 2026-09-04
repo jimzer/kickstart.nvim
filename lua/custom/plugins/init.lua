@@ -2,7 +2,7 @@
 --  I promise not to create any merge conflicts in this directory :)
 --
 -- See the kickstart.nvim README for more information
-local plugins = {
+return {
   { -- Full-repo diff review: file panel + side-by-side diffs, plus file history
     'sindrets/diffview.nvim',
     dependencies = { 'nvim-lua/plenary.nvim' },
@@ -22,12 +22,3 @@ local plugins = {
     },
   },
 }
-
--- Local work-in-progress plugin: only load it on machines where it is checked out,
--- so this config stays usable on other hosts.
-local nvimai_dir = vim.fn.expand '~/Projects/bitswired/nvimai.vim/nvimai'
-if vim.fn.isdirectory(nvimai_dir) == 1 then
-  table.insert(plugins, { dir = nvimai_dir })
-end
-
-return plugins
