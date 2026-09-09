@@ -1,28 +1,26 @@
--- HOW THIS CONFIG IS DEPLOYED, AND HOW TO CHANGE IT
+-- THIS IS THE MAC'S NEOVIM CONFIG.
 --
--- This repository is consumed by Kiwami (github:kiwamios/kiwami) as a flake
--- input. On a Kiwami machine ~/.config/nvim is therefore a read-only symlink
--- into the Nix store: it cannot be edited in place, and :Lazy update cannot
--- write lazy-lock.json.
+-- It is an ordinary kickstart.nvim: lazy fetches the plugins, mason fetches
+-- the language servers, and everything works the way the kickstart README
+-- says it does. Clone it anywhere, open nvim, done.
 --
--- To iterate - and this is the part an agent will not guess - work against a
--- checkout under a different app name, which isolates config, data and state:
+-- It used to be Kiwami's config too, consumed as a flake input, and that is
+-- no longer true. On a Kiwami machine neovim is built by nix - plugins,
+-- language servers and lua all resolved from the store before nvim starts -
+-- and its config lives in that repository under config/nvim. Two package
+-- managers fighting over one directory was the reason to split: on an
+-- ephemeral read-only root, lazy could not write its lockfile, mason's
+-- downloaded binaries are linked for a filesystem NixOS does not have, and
+-- treesitter wanted a C compiler on every machine to build grammars nix can
+-- ship pre-built.
 --
---   git clone git@github.com:jimzer/kickstart.nvim ~/nvim-dev
---   ln -s ~/nvim-dev ~/.config/nvim-dev
---   NVIM_APPNAME=nvim-dev nvim
+-- So the two are separate now, and neither constrains the other. What they
+-- keep in common is the keymaps, on purpose - the same <leader> bindings do
+-- the same things here and there. A change worth having in both has to be
+-- made in both; there is no longer any mechanism that carries it across.
 --
--- Everything works normally there, including :Lazy. The checkout is
--- disposable; if a reboot eats it, clone it again.
---
--- Pushing is not enough to change any machine. The machines run the commit
--- that Kiwami's flake.lock pins, so landing a change takes two more steps:
---
---   nix flake update nvim-config     # in the kiwami repo, then commit + push
---   sudo kiwami update               # on each machine
---
--- On a non-Kiwami machine (a Mac, say) this is just an ordinary config
--- directory and none of the above applies.
+--   this file            -> the mac, via lazy and mason
+--   kiwami/config/nvim   -> Kiwami machines, via nix
 
 --[[
 
