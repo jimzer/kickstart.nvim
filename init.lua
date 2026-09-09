@@ -1,3 +1,29 @@
+-- HOW THIS CONFIG IS DEPLOYED, AND HOW TO CHANGE IT
+--
+-- This repository is consumed by Kiwami (github:kiwamios/kiwami) as a flake
+-- input. On a Kiwami machine ~/.config/nvim is therefore a read-only symlink
+-- into the Nix store: it cannot be edited in place, and :Lazy update cannot
+-- write lazy-lock.json.
+--
+-- To iterate - and this is the part an agent will not guess - work against a
+-- checkout under a different app name, which isolates config, data and state:
+--
+--   git clone git@github.com:jimzer/kickstart.nvim ~/nvim-dev
+--   ln -s ~/nvim-dev ~/.config/nvim-dev
+--   NVIM_APPNAME=nvim-dev nvim
+--
+-- Everything works normally there, including :Lazy. The checkout is
+-- disposable; if a reboot eats it, clone it again.
+--
+-- Pushing is not enough to change any machine. The machines run the commit
+-- that Kiwami's flake.lock pins, so landing a change takes two more steps:
+--
+--   nix flake update nvim-config     # in the kiwami repo, then commit + push
+--   sudo kiwami update               # on each machine
+--
+-- On a non-Kiwami machine (a Mac, say) this is just an ordinary config
+-- directory and none of the above applies.
+
 --[[
 
 =====================================================================
