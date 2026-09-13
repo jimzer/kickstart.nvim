@@ -21,4 +21,17 @@ return {
       },
     },
   },
+
+  { -- In-buffer markdown rendering: headings, tables, callouts, code blocks
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    ft = { 'markdown' },
+    -- Stock defaults. Worth knowing what they give you:
+    --   render_modes = { 'n', 'c', 't' } -- insert and visual show raw source
+    --   anti_conceal.enabled = true      -- the cursor line always shows raw
+    opts = {},
+    keys = {
+      { '<leader>tm', '<cmd>RenderMarkdown buf_toggle<CR>', desc = '[T]oggle [M]arkdown render' },
+    },
+  },
 }
