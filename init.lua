@@ -926,25 +926,84 @@ require('lazy').setup({
   },
   { -- Highlight, edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
-    -- Pin to `master`: the `main` branch is the rewrite, which drops the
-    -- `nvim-treesitter.configs` module this spec configures below.
-    branch = 'master',
+    -- `main` is the rewrite, and the only branch that supports Neovim 0.12.
+    -- `master` declares "Neovim 0.10 or 0.11" and its query directives read
+    -- `match[id]` as one node where 0.12 passes a list, so markdown code-fence
+    -- injections crash with "attempt to call method 'range' (a nil value)".
+    --
+    -- The rewrite dropped `nvim-treesitter.configs`, so the `ensure_installed`
+    -- / `highlight` / `indent` / `auto_install` options it used to consume are
+    -- wired up by hand below, the way upstream kickstart now does it.
+    --
+    -- It also builds grammars with the `tree-sitter` CLI rather than shipping
+    -- pre-generated sources, so that binary is now a hard requirement:
+    -- `brew install tree-sitter-cli`, or the release binary on linux. Without
+    -- it every install fails with ENOENT (cmd): 'tree-sitter'.
+    branch = 'main',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-    -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-    opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-      -- Autoinstall languages that are not installed
-      auto_install = true,
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { 'ruby' },
-      },
-      indent = { enable = true, disable = { 'ruby' } },
-    },
+    lazy = false,
+    config = function()
+      local ts = require 'nvim-treesitter'
+
+      ts.install {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+      }
+
+      ---@param buf integer
+      ---@param language string
+      local function try_attach(buf, language)
+        -- The parser may not exist, and the buffer may be gone by the time an
+        -- install finishes.
+        if not vim.treesitter.language.add(language) then
+          return
+        end
+        if not vim.api.nvim_buf_is_valid(buf) then
+          return
+        end
+
+        vim.treesitter.start(buf, language)
+
+        -- Without an indents query this falls back to vim's own indentexpr.
+        if vim.treesitter.query.get(language, 'indents') then
+          vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end
+      end
+
+      local available = ts.get_available()
+      vim.api.nvim_create_autocmd('FileType', {
+        group = vim.api.nvim_create_augroup('kickstart-treesitter', { clear = true }),
+        callback = function(args)
+          local buf, filetype = args.buf, args.match
+
+          local language = vim.treesitter.language.get_lang(filetype)
+          if not language then
+            return
+          end
+
+          if vim.tbl_contains(ts.get_installed 'parsers', language) then
+            try_attach(buf, language)
+          elseif vim.tbl_contains(available, language) then
+            -- Auto-install, and attach once it lands.
+            ts.install(language):await(function()
+              try_attach(buf, language)
+            end)
+          else
+            -- The parser may still exist outside nvim-treesitter's index.
+            try_attach(buf, language)
+          end
+        end,
+      })
+    end,
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
