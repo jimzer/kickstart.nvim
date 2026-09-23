@@ -145,6 +145,13 @@ end)
 -- Enable break indent
 vim.opt.breakindent = true
 
+-- Indent with spaces by default. vim-sleuth falls back to these global
+-- values when a file has nothing to detect (a new file in a new folder),
+-- so without this those files get tabs regardless of the ftplugin.
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
+
 -- Save undo history
 vim.opt.undofile = true
 
@@ -1066,23 +1073,17 @@ require('lazy').setup({
 -- [[ Filetype-Specific Settings ]]
 local indent_group = vim.api.nvim_create_augroup('kickstart-filetype-indent', { clear = true })
 
--- Python and Lua: tabstop=8, shiftwidth=0, noexpandtab
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'python', 'lua' },
-  callback = function()
-    vim.opt_local.tabstop = 8
-    vim.opt_local.shiftwidth = 0
-    vim.opt_local.expandtab = false
-  end,
-  group = indent_group,
-})
+-- Python gets no entry: Neovim's own ftplugin already sets PEP 8 (4 spaces).
+-- These are defaults only; vim-sleuth overrides them when the file or its
+-- neighbours use something else.
 
--- JavaScript and TypeScript: tabstop=2, shiftwidth=2, expandtab
+-- JavaScript and TypeScript: 2 spaces. Biome's own default is tabs, but
+-- format-on-save follows the project's biome.json either way.
 vim.api.nvim_create_autocmd('FileType', {
   pattern = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact' },
   callback = function()
-    vim.opt_local.tabstop = 4
-    vim.opt_local.shiftwidth = 4
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
     vim.opt_local.expandtab = true
   end,
   group = indent_group,
